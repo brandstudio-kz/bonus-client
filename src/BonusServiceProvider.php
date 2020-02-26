@@ -11,6 +11,7 @@ class BonusServiceProvider extends ServiceProvider
     public function register()
     {
         $this->mergeConfigFrom(__DIR__.'/config/bonus.php', 'bonus');
+        $this->loadRoutesFrom(__DIR__.'/routes/bonus.php');
 
         if ($this->app->runningInConsole()) {
             $this->publish();

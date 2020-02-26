@@ -7,4 +7,7 @@ return [
     'bonus_type' => env('BONUS_TYPE', 2),
     'bonus_site_id' => env('BONUS_SITE_ID', 1),
     'token' => env('BONUS_TOKEN', 'testtoken'),
+
+    'show_user_url' => '/user/{id}/show',
+    'show_order_url' => '/order/{id}/show',
 ];
