@@ -3,7 +3,7 @@
 namespace BrandStudio\Bonus\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Bonus;
+use BrandStudio\Bonus\Facades\Bonus;
 
 abstract class Order extends Model
 {
