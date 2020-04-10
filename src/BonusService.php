@@ -90,7 +90,7 @@ class BonusService
             ]);
             return json_decode($response->getBody()->getContents(), true);
         } catch (\Exception $e) {
-            dd(json_decode($e->getResponse()->getBody()->getContents(), true));
+            \Log::error($e->getResponse()->getBody()->getContents());
         }
     }
 
