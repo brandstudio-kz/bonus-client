@@ -44,6 +44,11 @@ class BonusService
     {
         return $this->sendRequest('client', $params, 'PUT');
     }
+    
+    public function addExtraBonus(array $params = [])
+    {
+        return $this->sendRequest('client/bonus', $params, 'POST');
+    }
 
 
     public function getBonuses(array $params = [])
@@ -77,7 +82,7 @@ class BonusService
         $data['_method'] = $method;
         $data['_token'] = $this->config['token'];
         if (isset($data['bonus'])) {
-            $data['bonus']['type'] = isset($data['bonus']['type']) ? $data['bonus']['type'] : $this->config['bonus_type'];
+            $data['bonus']['type'] = $this->config['bonus_type'];
         }
         if (function_exists('backpack_user') && backpack_user()) {
             $data['manager_id'] = backpack_user()->id;
@@ -90,7 +95,11 @@ class BonusService
             ]);
             return json_decode($response->getBody()->getContents(), true);
         } catch (\Exception $e) {
-            \Log::error($e->getResponse()->getBody()->getContents());
+            try {
+                \Log::error($e->getResponse()->getBody()->getContents());
+            } catch(\Exception $e) {
+                \Log::error($e);                
+            }
         }
     }
 
