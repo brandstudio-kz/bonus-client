@@ -77,7 +77,7 @@ class BonusService
         $data['_method'] = $method;
         $data['_token'] = $this->config['token'];
         if (isset($data['bonus'])) {
-            $data['bonus']['type'] = $this->config['bonus_type'];
+            $data['bonus']['type'] = isset($data['bonus']['type']) ? $data['bonus']['type'] : $this->config['bonus_type'];
         }
         if (function_exists('backpack_user') && backpack_user()) {
             $data['manager_id'] = backpack_user()->id;
