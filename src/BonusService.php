@@ -3,6 +3,7 @@
 namespace BrandStudio\Bonus;
 
 use GuzzleHttp\Client;
+use BrandStudio\Bonus\Models\Order;
 
 class BonusService
 {
@@ -50,13 +51,25 @@ class BonusService
         return $this->sendRequest('client/bonus', $params, 'POST');
     }
 
-    public function frozeBonus(array $params)
+    public function frozeBonus(Order $order)
     {
+        $params = [
+            'client' => $order->bonusesClient(),
+            'bonus' => [
+                'used' => $order->bonusesUsed(),
+            ],
+        ];
         return $this->sendRequest('client/froze', $params, 'POST');
     }
 
-    public function unfrozeBonus(array $params)
+    public function unfrozeBonus(Order $order)
     {
+        $params = [
+            'client' => $order->bonusesClient(),
+            'bonus' => [
+                'used' => $order->bonusesUsed(),
+            ],
+        ];
         return $this->sendRequest('client/unfroze', $params, 'POST');
     }
 
@@ -71,8 +84,18 @@ class BonusService
         return $this->sendRequest('bonus/show', $params);
     }
 
-    public function createBonus(array $params = [])
+    public function createBonus(Order $order)
     {
+        $params = [
+            'client' => $order->bonusesClient(),
+            'bonus' => [
+                'order_id' => $order->id,
+                'order' => $order->bonusesDescription(),
+                'total' => $order->bonusesTotal(),
+                'cashback' => $order->bonusesCashback(),
+                'used' => $order->bonusesUsed(),
+            ],
+        ];
         return $this->sendRequest('bonus', $params, 'POST');
     }
 
@@ -81,8 +104,13 @@ class BonusService
         return $this->sendRequest('bonus', $params, 'PUT');
     }
 
-    public function cancelBonus(array $params = [])
+    public function cancelBonus(Order $order)
     {
+        $params = [
+            'bonus' => [
+                'order_id' => $order->id,
+            ],
+        ];
         return $this->sendRequest('bonus/cancel', $params, 'PUT');
     }
 

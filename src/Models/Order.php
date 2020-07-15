@@ -16,10 +16,11 @@ abstract class Order extends Model
     public abstract function bonusesCheck() : bool;
     public abstract static function bonusesStatusField() : string;
     public abstract static function bonusesIsSuccess($status) : bool;
+    public abstract static function bonusesIsCanceled($status) : bool;
 
-    public static function bonusesIsCanceled($status) : bool
+    private function getStatus()
     {
-        return static::bonusesIsSuccess($status);
+        return $this->{static::bonusesStatusField()};
     }
 
     public static function boot()
@@ -27,80 +28,47 @@ abstract class Order extends Model
         parent::boot();
 
         static::created(function($order) {
-            if (static::bonusesIsSuccess($order->getStatus())) {
-                $order->createBonus();
-            } else if (!static::bonusesIsCanceled()) {
-                $order->frozeBonus();
+            if ($order->bonusesCheck()) {
+                if (static::bonusesIsSuccess($order->getStatus())) {
+                    Bonus::createBonus($order);
+                } else if (!static::bonusesIsCanceled($order->getStatus())) {
+                    Bonus::frozeBonus($order);
+                }
             }
         });
 
         static::updating(function($order) {
             $old_status = $order->getOriginal(static::bonusesStatusField());
             if ($order->bonusesCheck()) {
-                if (!static::bonusesIsSuccess($old_status) && static::bonusesIsSuccess($order->getStatus())) {
+                if (static::bonusesIsSuccess($order->getStatus())) {
+                    // current status - success
                     if (!static::bonusesIsCanceled($old_status)) {
-                        $order->unfrozeBonus();
+                        // previous status - neutral
+                        Bonus::unfrozeBonus($order);
                     }
-                    $order->createBonus();
-                } else if (!static::bonusesIsSuccess($order->getStatus())) {
+                    Bonus::createBonus($order);
+                } else if (static::bonusesIsCanceled($order->getStatus())) {
+                    // current status - canceled
                     if (static::bonusesIsSuccess($old_status)) {
-                        $order->cancelBonus();
+                        // previous status - success
+                        Bonus::cancelBonus($order);
                     } else {
-                        $order->unfrozeBonus();
+                        // previous status - neutral
+                        Bonus::unfrozeBonus($order);
+                    }
+                } else {
+                    // current status - neutral
+                    if (static::bonusesIsSuccess($old_status)) {
+                        // previous status - success
+                        Bonus::cancelBonus($order);
+                        Bonus::frozeBonus($order);
+                    } else if (static::bonusesIsCanceled($old_status)) {
+                        // previous status - canceled
+                        Bonus::frozeBonus($order);
                     }
                 }
             }
-
         });
     }
-
-    private function createBonus()
-    {
-        $response = Bonus::createBonus([
-            'client' => $order->bonusesClient(),
-            'bonus' => [
-                'order_id' => $order->id,
-                'order' => $order->bonusesDescription(),
-                'total' => $order->bonusesTotal(),
-                'cashback' => $order->bonusesCashback(),
-                'used' => $order->bonusesUsed(),
-            ],
-        ]);
-    }
-
-    private function cancelBonus()
-    {
-        $response = Bonus::cancelBonus([
-            'bonus' => [
-                'order_id' => $order->id,
-            ],
-        ]);
-    }
-
-    private function frozeBonus()
-    {
-        $response = Bonus::frozeBonus([
-            'client' => $order->bonusesClient(),
-            'bonus' => [
-                'used' => $order->bonusesUsed(),
-            ],
-        ]);
-    }
-
-    private function unfrozeBonus()
-    {
-        $response = Bonus::unfrozeBonus([
-            'client' => $order->bonusesClient(),
-            'bonus' => [
-                'used' => $order->bonusesUsed(),
-            ],
-        ]);
-    }
-
-    private function getStatus()
-    {
-        return $order->{static::bonusesStatusField()};
-    }
-
 
 }

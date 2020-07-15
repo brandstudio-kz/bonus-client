@@ -29,7 +29,7 @@ trait HasBonusesTrait
 
     public function getBonusAttribute()
     {
-        return $this->client ? $this->client['bonus'] : 0;
+        return $this->client ? $this->client['active_bonus'] : 0;
     }
 
 }
