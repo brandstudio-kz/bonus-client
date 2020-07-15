@@ -44,10 +44,20 @@ class BonusService
     {
         return $this->sendRequest('client', $params, 'PUT');
     }
-    
+
     public function addExtraBonus(array $params = [])
     {
         return $this->sendRequest('client/bonus', $params, 'POST');
+    }
+
+    public function frozeBonus(array $params)
+    {
+        return $this->sendRequest('client/froze', $params, 'POST');
+    }
+
+    public function unfrozeBonus(array $params)
+    {
+        return $this->sendRequest('client/unfroze', $params, 'POST');
     }
 
 
@@ -98,7 +108,7 @@ class BonusService
             try {
                 \Log::error($e->getResponse()->getBody()->getContents());
             } catch(\Exception $e) {
-                \Log::error($e);                
+                \Log::error($e);
             }
         }
     }
