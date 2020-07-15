@@ -70,22 +70,31 @@ abstract class Order extends Model
 
     private function cancelBonus()
     {
-        Bonus::cancelBonus([
+        $response = Bonus::cancelBonus([
             'bonus' => [
                 'order_id' => $order->id,
             ],
         ]);
-
     }
 
     private function frozeBonus()
     {
-
+        $response = Bonus::frozeBonus([
+            'client' => $order->bonusesClient(),
+            'bonus' => [
+                'used' => $order->bonusesUsed(),
+            ],
+        ]);
     }
 
     private function unfrozeBonus()
     {
-
+        $response = Bonus::unfrozeBonus([
+            'client' => $order->bonusesClient(),
+            'bonus' => [
+                'used' => $order->bonusesUsed(),
+            ],
+        ]);
     }
 
     private function getStatus()
