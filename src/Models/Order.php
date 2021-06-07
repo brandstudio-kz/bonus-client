@@ -5,6 +5,9 @@ namespace BrandStudio\Bonus\Models;
 use Illuminate\Database\Eloquent\Model;
 use BrandStudio\Bonus\Facades\Bonus;
 
+use BrandStudio\Bonus\Jobs\OrderCreatedJob;
+use BrandStudio\Bonus\Jobs\OrderUpdatedJob;
+
 abstract class Order extends Model
 {
 
@@ -18,6 +21,11 @@ abstract class Order extends Model
     public abstract static function bonusesIsSuccess($status) : bool;
     public abstract static function bonusesIsCanceled($status) : bool;
 
+    public function getBonusStatus()
+    {
+        return $this->getStatus();
+    }
+
     private function getStatus()
     {
         return $this->{static::bonusesStatusField()};
@@ -28,50 +36,12 @@ abstract class Order extends Model
         parent::boot();
 
         static::created(function($order) {
-            dispatch(function() use($order) {
-                if ($order->bonusesCheck()) {
-                    if (static::bonusesIsSuccess($order->getStatus())) {
-                        Bonus::createBonus($order);
-                    } else if (!static::bonusesIsCanceled($order->getStatus())) {
-                        Bonus::frozeBonus($order);
-                    }
-                }
-            });
+            OrderCreatedJob::dispatch($order);
         });
 
         static::updating(function($order) {
             $old_status = $order->getOriginal(static::bonusesStatusField());
-            dispatch(function() use($order, $old_status) {
-                if ($order->bonusesCheck()) {
-                    if (static::bonusesIsSuccess($order->getStatus())) {
-                        // current status - success
-                        if (!static::bonusesIsCanceled($old_status)) {
-                            // previous status - neutral
-                            Bonus::unfrozeBonus($order);
-                        }
-                        Bonus::createBonus($order);
-                    } else if (static::bonusesIsCanceled($order->getStatus())) {
-                        // current status - canceled
-                        if (static::bonusesIsSuccess($old_status)) {
-                            // previous status - success
-                            Bonus::cancelBonus($order);
-                        } else {
-                            // previous status - neutral
-                            Bonus::unfrozeBonus($order);
-                        }
-                    } else {
-                        // current status - neutral
-                        if (static::bonusesIsSuccess($old_status)) {
-                            // previous status - success
-                            Bonus::cancelBonus($order);
-                            Bonus::frozeBonus($order);
-                        } else if (static::bonusesIsCanceled($old_status)) {
-                            // previous status - canceled
-                            Bonus::frozeBonus($order);
-                        }
-                    }
-                }
-            });
+            OrderUpdatedJob::dispatch($order, $old_status);
         });
     }
 
